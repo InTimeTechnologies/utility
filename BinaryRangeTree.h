@@ -2,108 +2,127 @@
 
 // Dependencies | std
 #include <set>
+#include <type_traits>
 
 // Dependencies | sandbox
 #include "Range.h"
 
-class BinaryIntRangeTree {
-	private:
-		// Properties
-		std::set<IntRange> ranges{};
-
-	public:
-		// Constructor / Destructor
-		BinaryIntRangeTree() = default;
-		BinaryIntRangeTree(const IntRange& range);
-		BinaryIntRangeTree(const std::set<IntRange>& ranges);
-
-		// Getters
-		std::set<IntRange> getRanges() const;
-
-		// Functions
-		bool push(int value);
-		bool push(const IntRange& range);
-		bool pop(int value);
-		bool pop(const IntRange& range);
-		bool popLeast(int& value);
-		bool popGreatest(int& value);
-};
-
-
-/*
-class BinaryIntRangeTree {
-	public:
-		// Struct
-		class Node {
-			public:
-				// Properties
-				BinaryIntRangeTree* owner{ nullptr };
-				Node* parent{ nullptr };
-				Node* left{ nullptr };
-				Node* right{ nullptr };
-
-				int least{ 0 };
-				int greatest{ 0 };
-
-				// Functions
-				Node* getLeftmost() const;
-				Node* getRightmost() const;
-				Node* unlinkParent();
-				Node* unlinkLeft();
-				Node* unlinkRight();
-				Node* unlink();
-				bool linkParent(Node* node);
-				bool linkLeft(Node* node);
-				bool linkRight(Node* node);
-				bool overlaps(Node* other);
-
-			public:
-				// Constructor / Destructor
-				Node() = default;
-				Node(int least, int greatest);
-				Node(const Node& other);
-				~Node();
-
-				// Operators | assignment
-				Node& operator=(const Node& other);
-				Node& operator=(Node&& other) noexcept;
-
-				// Operators | comparison
-				bool operator<(const Node& other);
-				bool operator>(const Node& other);
-				bool operator==(const Node& other);
-				bool operator<=(const Node& other);
-				bool operator>=(const Node& other);
-
-				// Getters
-				int getLeast() const;
-				int getGreatest() const;
-				int getRange() const;
-
-				// Functions
-				bool isLeft() const;
-				bool isRight() const;
-				bool isRoot() const;
-				bool hasParent() const;
-				bool has(int value) const;
-		};
-
+template <typename T> class BinaryRangeTree {
+	// Static assert:
+	static_assert(std::is_integral<T>::value, "BinaryRangeTree requires an integral type."); 
+	
 	// Object
 	private:
 		// Properties
-		Node* root{ nullptr };
+		std::set<Range<T>> ranges{};
 
 	public:
 		// Constructor / Destructor
-		BinaryIntRangeTree() = default;
-		BinaryIntRangeTree(int least, int greatest);
-		~BinaryIntRangeTree();
+		BinaryRangeTree() = default;
+		BinaryRangeTree(const Range<T>& range) : ranges(range) {}
+		BinaryRangeTree(const std::set<Range<T>>& ranges) : ranges(ranges) {}
 
 		// Getters
-		bool push(int value);
-		bool pop(int value);
-		bool has(int value);
-		unsigned int count() const;
+		std::set<Range<T>> getRanges() const {
+			return ranges;
+		}
 
+		// Functions
+		bool push(T value) {
+			return push({ value, value });
+		}
+		bool push(const Range<T>& range) {
+			Range<T> newRange{ range };
+			std::pair<std::set<Range<T>>::iterator, bool> result = ranges.insert(newRange);
+
+			if (result.second == false)
+				return false;
+
+			typename std::set<Range<T>>::iterator newNode = result.first;
+			typename std::set<Range<T>>::iterator prev = newNode;
+			typename std::set<Range<T>>::iterator next = std::next(newNode);
+			bool merged = false;
+
+			if (prev != ranges.begin()) {
+				--prev;
+				if (prev->greatest + 1 == newRange.least) {
+					newRange.least = prev->least;
+					ranges.erase(prev);
+					merged = true;
+				}
+			}
+			if (next != ranges.end()) {
+				if (next->least - 1 == newRange.greatest) {
+					newRange.greatest = next->greatest;
+					ranges.erase(next);
+					merged = true;
+				}
+			}
+
+			if (merged) {
+				if (ranges.size() == 1) {
+					ranges.clear();
+					ranges.insert(newRange);
+				}
+				else {
+					typename std::set<Range<T>>::iterator hintIterator = newNode;
+					if (newNode != ranges.begin()) {
+						hintIterator--;
+					}
+					else if (newNode != std::prev(ranges.end())) {
+						hintIterator++;
+					}
+
+					ranges.erase(newNode);
+					ranges.insert(hintIterator, newRange);
+				}
+			}
+
+			return true;
+		}
+		bool pop(T value) {
+			return pop({ value, value });
+		}
+		bool pop(const Range<T>& rangeToRemove) {
+			typename std::set<Range<T>>::iterator iteratorToRemove = ranges.lower_bound(rangeToRemove);
+
+			if (iteratorToRemove == ranges.end())
+				return false;
+
+			if (*iteratorToRemove == rangeToRemove) {
+				ranges.erase(iteratorToRemove);
+				return true;
+			}
+
+			Range<T> currentRange = *iteratorToRemove;
+			if (rangeToRemove.inside(*iteratorToRemove)) {
+				typename std::set<Range<T>>::iterator hintIterator = iteratorToRemove;
+				typename std::set<Range<T>>::iterator prev = ranges.end();
+				typename std::set<Range<T>>::iterator next = ranges.end();
+				if (iteratorToRemove != ranges.begin()) {
+					prev = std::prev(iteratorToRemove);
+					hintIterator = prev;
+				}
+				if (std::next(iteratorToRemove) != ranges.end()) {
+					next = std::next(iteratorToRemove);
+					hintIterator = next;
+				}
+
+				ranges.erase(iteratorToRemove);
+
+				bool createLeftNode{ currentRange.x0 < rangeToRemove.x0 };
+				bool createRightNode{ currentRange.x1 > rangeToRemove.x1 };
+				if (createLeftNode && prev != ranges.end())
+					ranges.insert(hintIterator, { currentRange.x0, rangeToRemove.x0 - 1 });
+				if (createRightNode && next != ranges.end())
+					ranges.insert(hintIterator, { rangeToRemove.x1 + 1, currentRange.x1 });
+
+				return true;
+			}
+
+			return false;
+		}
+		//bool popLeast(T* value);
+		//bool popGreatest(T* value);
 };
-*/
+
