@@ -122,7 +122,53 @@ template <typename T> class BinaryRangeTree {
 
 			return false;
 		}
-		//bool popLeast(T* value);
-		//bool popGreatest(T* value);
+		bool popLeast(T* value) {
+			typename std::set<Range<T>>::iterator leastIterator = ranges.begin();
+			if (leastIterator == ranges.end())
+				return false;
+			if (value != nullptr)
+				*value = (*leastIterator).x0;
+
+			if ((*leastIterator).x0 == (*leastIterator).x1) {
+				ranges.erase(leastIterator);
+				return true;
+			}
+
+			typename std::set<Range<T>>::iterator hintIterator = std::next(leastIterator) == ranges.end() ? std::next(leastIterator) : ranges.end();
+			Range<T> newRange{ (*leastIterator).x0 + 1, (*leastIterator).x1 };
+			ranges.erase(leastIterator);
+			if (hintIterator == ranges.end())
+				ranges.insert(newRange);
+			else
+				ranges.insert(hintIterator, newRange);
+
+			return true;
+		}
+		bool popGreatest(T* value) {
+			if (ranges.size() == 0ULL)
+				return false;
+
+			typename std::set<Range<T>>::iterator greatestIterator = std::prev(ranges.end());
+			if (value != nullptr)
+				*value = (*greatestIterator).x1;
+
+			if ((*greatestIterator).x0 == (*greatestIterator).x1) {
+				ranges.erase(greatestIterator);
+				return true;
+			}
+
+			typename std::set<Range<T>>::iterator hintIterator = greatestIterator == ranges.begin() ? ranges.end() : std::prev(greatestIterator);
+			Range<T> newRange{ (*greatestIterator).x0, (*greatestIterator).x1 - 1 };
+			ranges.erase(greatestIterator);
+			if (hintIterator == ranges.end())
+				ranges.insert(newRange);
+			else
+				ranges.insert(hintIterator, newRange);
+
+			return false;
+		}
+		void clear() {
+			ranges.clear();
+		}
 };
 
