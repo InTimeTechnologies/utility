@@ -1,3 +1,19 @@
+/******************************************************************************
+ * Filename:    BinaryRangeTree.h
+ * Author:      Chris Barrios Agosto
+ * Date:        August 2, 2025
+ * Description: This header defines the BinaryRangeTree template class.
+ *              It uses std::set to store ordered, non-overlapping integral ranges.
+ *              Provides efficient insertions and deletions with auto-merging logic.
+ *
+ * Usage:
+ *     BinaryRangeTree<int> rangeTree;
+ *     rangeTree.push(5); // Adds value 5
+ *     rangeTree.pop({5, 10}); // Removes range 5-10
+ *
+ * License:     MIT License
+ ******************************************************************************/
+
 #pragma once
 
 // Dependencies | std
@@ -45,15 +61,15 @@ template <typename T> class BinaryRangeTree {
 
 			if (prev != ranges.begin()) {
 				--prev;
-				if (prev->greatest + 1 == newRange.least) {
-					newRange.least = prev->least;
+				if (prev->x1 + 1 == newRange.x0) {
+					newRange.x0 = prev->x0;
 					ranges.erase(prev);
 					merged = true;
 				}
 			}
 			if (next != ranges.end()) {
-				if (next->least - 1 == newRange.greatest) {
-					newRange.greatest = next->greatest;
+				if (next->x0 - 1 == newRange.x1) {
+					newRange.x1 = next->x1;
 					ranges.erase(next);
 					merged = true;
 				}
@@ -112,9 +128,9 @@ template <typename T> class BinaryRangeTree {
 
 				bool createLeftNode{ currentRange.x0 < rangeToRemove.x0 };
 				bool createRightNode{ currentRange.x1 > rangeToRemove.x1 };
-				if (createLeftNode && prev != ranges.end())
+				if (createLeftNode)
 					ranges.insert(hintIterator, { currentRange.x0, rangeToRemove.x0 - 1 });
-				if (createRightNode && next != ranges.end())
+				if (createRightNode)
 					ranges.insert(hintIterator, { rangeToRemove.x1 + 1, currentRange.x1 });
 
 				return true;
@@ -127,15 +143,15 @@ template <typename T> class BinaryRangeTree {
 			if (leastIterator == ranges.end())
 				return false;
 			if (value != nullptr)
-				*value = (*leastIterator).x0;
+				*value = leastIterator->x0;
 
-			if ((*leastIterator).x0 == (*leastIterator).x1) {
+			if (leastIterator->x0 == leastIterator->x1) {
 				ranges.erase(leastIterator);
 				return true;
 			}
 
 			typename std::set<Range<T>>::iterator hintIterator = std::next(leastIterator) == ranges.end() ? std::next(leastIterator) : ranges.end();
-			Range<T> newRange{ (*leastIterator).x0 + 1, (*leastIterator).x1 };
+			Range<T> newRange{ leastIterator->x0 + 1, leastIterator->x1 };
 			ranges.erase(leastIterator);
 			if (hintIterator == ranges.end())
 				ranges.insert(newRange);
@@ -150,22 +166,22 @@ template <typename T> class BinaryRangeTree {
 
 			typename std::set<Range<T>>::iterator greatestIterator = std::prev(ranges.end());
 			if (value != nullptr)
-				*value = (*greatestIterator).x1;
+				*value = greatestIterator->x1;
 
-			if ((*greatestIterator).x0 == (*greatestIterator).x1) {
+			if (greatestIterator->x0 == greatestIterator->x1) {
 				ranges.erase(greatestIterator);
 				return true;
 			}
 
 			typename std::set<Range<T>>::iterator hintIterator = greatestIterator == ranges.begin() ? ranges.end() : std::prev(greatestIterator);
-			Range<T> newRange{ (*greatestIterator).x0, (*greatestIterator).x1 - 1 };
+			Range<T> newRange{ greatestIterator->x0, greatestIterator->x1 - 1 };
 			ranges.erase(greatestIterator);
 			if (hintIterator == ranges.end())
 				ranges.insert(newRange);
 			else
 				ranges.insert(hintIterator, newRange);
 
-			return false;
+			return true;
 		}
 		void clear() {
 			ranges.clear();
