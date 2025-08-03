@@ -1,5 +1,23 @@
 #pragma once
 
+/******************************************************************************
+ * Filename:    Range.h
+ * Author:      Christophr Barrios Agosto
+ * Date:        August 2, 2025
+ * Description: This header defines the Rangee template class.
+ *              It is a simple rane class with the comparison operators
+ *              overloaded. So that std::set<Range> can properly order the
+ *              ranges in the BinaryRangeTree class.s
+ *
+ * Usage:
+ *     Range<int> range{ -5, 10 };
+ *     range.getRange();
+ *     range.x0;
+ *     range.x1;
+ *
+ * License:     MIT License
+ ******************************************************************************/
+
 template <typename T> struct Range {
 	// Properties
 	T x0{};
