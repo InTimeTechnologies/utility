@@ -5,7 +5,7 @@
  * Description: This header defines the Rangee template class.
  *              It is a simple rane class with the comparison operators
  *              overloaded. So that std::set<Range> can properly order the
- *              ranges in the BinaryRangeTree class.s
+ *              ranges in the BinaryRangeTree class. x0 < = x1 == trye always.
  *
  * Usage:
  *     Range<int> range{ -5, 10 };
