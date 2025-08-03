@@ -187,3 +187,4 @@ template <typename T> class BinaryRangeTree {
 			ranges.clear();
 		}
 };
+
