@@ -52,6 +52,12 @@ template <typename T> class BinaryRangeTree {
 		std::set<Range<T>> getRanges() const {
 			return ranges;
 		}
+		T totalRange() const {
+			T totalRange{};
+			for (const Range<T>& range : ranges)
+				totalRange += range.getRange();
+			return totalRange;
+		}
 
 		// Setters
 		void setRanges(const std::set<Range<T>>& ranges) {
