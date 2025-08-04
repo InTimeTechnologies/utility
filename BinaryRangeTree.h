@@ -19,8 +19,10 @@
 // Dependencies | std
 #include <set>
 #include <type_traits>
+#include <istream>
+#include <ostream>
 
-// Dependencies | sandbox
+// Dependencies | utility
 #include "Range.h"
 
 template <typename T> class BinaryRangeTree {
@@ -35,12 +37,27 @@ template <typename T> class BinaryRangeTree {
 	public:
 		// Constructor / Destructor
 		BinaryRangeTree() = default;
-		BinaryRangeTree(const Range<T>& range) : ranges(range) {}
-		BinaryRangeTree(const std::set<Range<T>>& ranges) : ranges(ranges) {}
+		BinaryRangeTree(const Range<T>& range) : ranges(std::set<Range<T>>{ range }) {}
+		BinaryRangeTree(const std::set<Range<T>>& ranges) {
+			for (const Range<int>& range : ranges)
+				this->ranges.insert(range);
+		}
+		BinaryRangeTree(std::set<Range<T>>&& ranges) {
+			for (const Range<int> range : ranges)
+				this->ranges.insert(range);
+			ranges.clear();
+		}
 
 		// Getters
 		std::set<Range<T>> getRanges() const {
 			return ranges;
+		}
+
+		// Setters
+		void setRanges(const std::set<Range<T>>& ranges) {
+			this->ranges.clear();
+			for (Range<T> range : ranges)
+				push(range);
 		}
 
 		// Functions
@@ -188,3 +205,49 @@ template <typename T> class BinaryRangeTree {
 		}
 };
 
+// Operators | std::ostream <<
+template <typename T>
+std::ostream& operator<<(std::ostream& ostream, const BinaryRangeTree<T>& binaryRangeTree) {
+	std::set<Range<T>> set = binaryRangeTree.getRanges();
+	ostream << "[";
+	for (typename std::set<Range<T>>::iterator iterator = set.begin(); iterator != set.end(); iterator++) {
+		ostream << *iterator;
+		if (iterator != std::prev(set.end()))
+			ostream << ", ";
+	}
+	return ostream << "]";
+}
+
+// Operators | std::istream >>
+template <typename T>
+std::istream& operator>>(std::istream& istream, BinaryRangeTree<T>& binaryRangeTree) {
+	std::set<Range<T>> set{};
+	char c{ 0 };
+	Range<T> range{};
+
+	istream >> std::ws >> c;
+	if (c != '[') {
+		istream.setstate(std::ios::failbit);
+		return istream;
+	}
+
+	while (true) {
+		istream >> range;
+		if (!istream)
+			break;
+		set.insert(range);
+
+		istream >> std::ws >> c;
+		if (c == ']') {
+			break; // done reading
+		}
+		else if (c != ',') {
+			istream.setstate(std::ios::failbit);
+			break;
+		}
+	}
+
+	binaryRangeTree.setRanges(set);
+
+	return istream;
+}
