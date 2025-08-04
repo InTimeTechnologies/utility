@@ -18,13 +18,18 @@
 
 #pragma once
 
+// Dependencies | std
+#include <string>
+#include <istream>
+#include <ostream>
+
 // Forward declarations
 template <typename T> class BinaryRangeTree;
 
 template <typename T> class Range {
 	// Friends
 	friend class BinaryRangeTree<T>;
-
+	
 	// Object
 	private:
 		// Properties
@@ -67,6 +72,12 @@ template <typename T> class Range {
 			else
 				this->x1 = x1;
 		}
+		void setRange(T x0, T x1) {
+			if (x0 > x1)
+				std::swap(x0, x1);
+			this->x0 = x0;
+			this->x1 = x1;
+		}
 
 		// Operators | comparison
 		bool operator==(const Range& other) const {
@@ -102,4 +113,42 @@ template <typename T> class Range {
 		Range getMerge(const Range& other) const {
 			return Range{ x0 < other.x0 ? x0 : other.x0, x1 > other.x1 ? x1 : other.x1 };
 		}
+		std::string toString() const {
+			return "[" + x0 + ", " + x1 + "]";
+		}
 };
+
+// Operators | std::ostream <<
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Range<T> range) {
+	return os << toString();
+}
+
+// Operators | std::istream >>
+template <typename T>
+std::istream& operator>>(std::istream& istream, Range<T>& range) {
+	char c{ 0 };
+	T x0{}, x1{};
+
+	istream >> std::ws >> c; // Skip leading whitespace
+	if (c != '[') {
+		istream.setstate(std::ios::failbit);
+		return istream;
+	}
+
+	istream >> x0 >> std::ws >> c;
+	if (c != ',') {
+		istream.setstate(std::ios::failbit);
+		return istream;
+	}
+
+	istream >> x1 >> std::ws >> c;
+	if (c != ']') {
+		istream.setstate(std::ios::failbit);
+		return istream;
+	}
+
+	range.setRange(x0, x1);
+
+	return istream;
+}
