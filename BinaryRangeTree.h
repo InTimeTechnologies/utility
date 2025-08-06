@@ -42,6 +42,9 @@ template <typename T> class BinaryRangeTree {
 			for (const Range<int>& range : ranges)
 				this->ranges.insert(range);
 		}
+		BinaryRangeTree(T x0, T x1) : BinaryRangeTree(Range<T>{ x0, x1 }) {
+
+		}
 		BinaryRangeTree(std::set<Range<T>>&& ranges) {
 			for (const Range<int> range : ranges)
 				this->ranges.insert(range);
